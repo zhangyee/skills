@@ -1,0 +1,30 @@
+{
+  "skill": "explain",
+  "cases": [
+    {
+      "id": "retry-boundaries",
+      "prompt": "请解释 fixtures/retry.py 中 fetch_with_retry 的执行过程：最多调用 fetch 几次，什么时候返回，最后仍超时会怎样，其他异常会怎样？只按代码说明。",
+      "files": [
+        "fixtures/retry.py"
+      ],
+      "assertions": [
+        "说明最多总共调用 fetch 3 次，即首次调用加最多 2 次重试。",
+        "说明任意一次成功都会立即返回，不继续调用。",
+        "说明第 3 次 TimeoutError 会重新抛出，其他异常不在此处捕获。",
+        "没有新增代码中不存在的延迟、退避或异步调度。"
+      ]
+    },
+    {
+      "id": "history-versus-behavior",
+      "prompt": "这段函数为什么把次数定为 3？材料只有 fixtures/retry.py，没有提交记录、讨论或作者说明。请区分代码能证明的行为、当前可评价的取舍和无法确认的历史原因。",
+      "files": [
+        "fixtures/retry.py"
+      ],
+      "assertions": [
+        "明确代码使用 3 次调用，但不能据此证明作者为何选 3。",
+        "若讨论取舍，标明这是当前分析或可能性，不冒充历史证据。",
+        "没有捏造测试数据、性能指标、提交记录或作者动机。"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skill 版本对比</title>
+<style>
+  :root {color-scheme:light dark; font:16px/1.6 system-ui,sans-serif; background:#f4f5f7; color:#202735}
+  body {max-width:1500px;margin:32px auto;padding:0 24px 80px}
+  h1 {font-size:30px;margin:0} h2 {font-size:21px} h3 {font-size:18px;margin-top:0}
+  .muted,small {color:#596579} .toolbar {display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin:20px 0}
+  button {padding:10px 18px;border:1px solid #365fc7;border-radius:7px;background:#365fc7;color:white;cursor:pointer;font:inherit}
+  article {background:white;border:1px solid #d9dfe8;border-radius:10px;padding:24px;margin:24px 0}
+  pre {white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.65 ui-monospace,monospace;background:#f3f5f8;padding:16px;border-radius:6px}
+  .sides {display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .side {min-width:0}.side + .side {border-left:1px solid #e0e4ed;padding-left:24px}
+  .error {color:#a82424}.review {border-top:1px solid #d9dfe8;padding-top:16px;margin-top:20px}
+  .choices {display:flex;gap:20px;flex-wrap:wrap} textarea {display:block;width:100%;box-sizing:border-box;min-height:90px;margin:12px 0;font:inherit;padding:10px}
+  summary {cursor:pointer} li {margin:6px 0}.identity {display:none} .reveal .identity {display:block}
+  a {color:#2856b7} code {overflow-wrap:anywhere}.summary {padding:20px;background:#e9eefb;border-radius:8px}
+  @media(max-width:800px){.sides{grid-template-columns:1fr}.side + .side{border-left:0;border-top:1px solid #e0e4ed;padding:20px 0 0}}
+  @media(prefers-color-scheme:dark){:root{background:#141922;color:#e5e9f0} article{background:#1d2531;border-color:#3a4657}pre{background:#111823}.muted,small{color:#aab7c9}.summary{background:#202e4b}a{color:#9bb9ff}}
+</style>
+<h1>Skill 版本对比</h1>
+<p class="muted">先按同一任务和检查标准查看 A / B。版本标签和模型评分默认隐藏。未评分的输出不算通过。</p>
+<div class="toolbar">
+  <label><input type="checkbox" id="reveal"> 显示版本与模型评分</label>
+  <button id="download">导出人工评审 JSON</button>
+  <span id="progress" aria-live="polite"></span>
+</div>
+<details><summary>运行信息与使用方法</summary><div id="metadata"></div></details>
+<div class="identity summary" id="summary"></div>
+<main id="pairs"></main>
+<script>
+/*__DATA__*/
+const savedKey = 'skill-eval-review-' + DATA.comparison_id;
+let reviews = DATA.reviews.slice();
+try { const saved = JSON.parse(localStorage.getItem(savedKey)); if (Array.isArray(saved)) reviews = saved; } catch (_) {}
+const element = (tag,text,cls) => {const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node;};
+const key = row => row.case_id + ':' + row.repetition;
+function persist(){try{localStorage.setItem(savedKey,JSON.stringify(reviews));}catch(_){}document.getElementById('progress').textContent='已记录 '+reviews.length+' / '+DATA.pairs.length+' 组';}
+const metadata=document.getElementById('metadata');
+metadata.append(element('p','比较编号：'+DATA.comparison_id),element('p','请求模型：'+DATA.summary.model_requested),element('p','任务集 SHA-256：'+DATA.summary.dataset_sha256));
+metadata.append(element('p','评审后下载 JSON，再在终端导入。浏览器中的修改只保存在本机浏览器；导入后才进入运行记录。模型评分供参考，检查证据后再作判断。'));
+metadata.append(element('pre','python3 scripts/eval-skills.py import-review '+JSON.stringify(DATA.run_path)+' /path/to/feedback.json'));
+const overall=document.getElementById('summary');
+for(const variant of ['baseline','candidate']){
+  const row=DATA.summary.variants[variant];
+  overall.append(element('p',row.name+'：完成 '+row.completed+'/'+row.planned+'；执行失败 '+row.failed+'；已评分 '+row.graded+'；断言平均通过率 '+(row.assertion_pass_rate===null?'未评分':(row.assertion_pass_rate*100).toFixed(1)+'%')+'；平均耗时 '+(row.mean_duration_seconds===null?'未知':row.mean_duration_seconds.toFixed(1)+' s')+'；平均 token '+(row.mean_total_tokens===null?'未知':row.mean_total_tokens.toFixed(0))));
+}
+for(const pair of DATA.pairs){
+  const article=element('article');article.append(element('h2',pair.case_id+' · 第 '+pair.repetition+' 次'));
+  const task=element('details');task.append(element('summary','查看原始任务'),element('pre',pair.prompt));article.append(task);
+  article.append(element('h3','同一检查标准'));const criteria=element('ul');for(const check of pair.assertions)criteria.append(element('li',check));article.append(criteria);
+  const columns=element('div',undefined,'sides');
+  pair.sides.forEach((row,index)=>{
+    const side=element('section',undefined,'side');side.append(element('h3',index===0?'A':'B'),element('p',row.version_name,'identity'));
+    side.append(element('p',row.status==='completed'?'执行完成':row.status==='failed'?'执行失败':'等待执行',row.status==='failed'?'error':'muted'));
+    if(row.error)side.append(element('pre',row.error,'error'));
+    if(row.output)side.append(element('pre',row.output));
+    if(row.output_file){const link=element('a','打开原始输出','identity');link.href=row.output_file;side.append(link);}
+    if(row.workspace){const info=element('p','任务目录：'+row.workspace,'identity');side.append(info);}
+    if(row.grading){const grades=element('details',undefined,'identity');grades.append(element('summary','模型断言评分及证据'));const items=element('ul');for(const check of row.grading.expectations)items.append(element('li',(check.passed?'通过：':'未通过：')+check.text+'\n证据：'+check.evidence));grades.append(items);side.append(grades);}
+    else side.append(element('p',row.grading_error?'模型评分失败：'+row.grading_error:'模型未评分','identity'));
+    columns.append(side);
+  });
+  article.append(columns);
+  const review=element('section',undefined,'review');review.append(element('h3','人工偏好'));
+  const choices=element('div',undefined,'choices');const notes=element('textarea');notes.placeholder='记录判断依据、遗漏或文风问题';notes.setAttribute('aria-label',pair.case_id+' 第 '+pair.repetition+' 次的评审备注');
+  const old=reviews.find(r=>key(r)===key(pair));if(old)notes.value=old.notes||'';
+  const radios=[];
+  function update(){const selected=radios.find(r=>r.checked);if(!selected)return;const value={case_id:pair.case_id,repetition:pair.repetition,winner:selected.value,notes:notes.value};reviews=reviews.filter(r=>key(r)!==key(pair));reviews.push(value);persist();}
+  const bothCompleted=pair.sides.every(row=>row.status==='completed');
+  for(const [value,label] of [[pair.sides[0].variant,'A 更好'],[pair.sides[1].variant,'B 更好'],['tie','相当'],['skip','暂不判断']]){
+    const input=element('input');input.type='radio';input.name=key(pair);input.value=value;input.checked=!!old&&old.winner===value;input.disabled=!bothCompleted&&value!=='skip';input.addEventListener('change',update);radios.push(input);const wrap=element('label');wrap.append(input,document.createTextNode(' '+label));choices.append(wrap);
+  }
+  notes.addEventListener('input',update);review.append(choices,notes);article.append(review);document.getElementById('pairs').append(article);
+}
+document.getElementById('reveal').addEventListener('change',event=>document.body.classList.toggle('reveal',event.target.checked));
+document.getElementById('download').addEventListener('click',()=>{const payload={comparison_id:DATA.comparison_id,reviews:reviews};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const link=element('a');link.href=url;link.download='feedback-'+DATA.comparison_id+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+persist();
+</script>
+</html>

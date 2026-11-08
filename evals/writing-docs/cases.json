@@ -1,0 +1,73 @@
+{
+  "skill": "writing-docs",
+  "evaluation": "Run the fixed tasks with scripts/eval-skills.py; compare frozen versions using the same assertions and human review.",
+  "cases": [
+    {
+      "id": "how-to-preserves-write-condition",
+      "prompt": "把以下内容改成仓库 README 中供有经验开发者执行的简短操作说明，读者只想降低当前预算。原文：该脚本作为系统的北极星，赋能预算治理闭环。budget.mjs 读取 budget.json 中已提交的上限，并统计导入 proto 的文件数；计数超过上限时 CI 失败。--write 会把当前计数写回 budget.json，只能在降低预算时使用。执行 --write 前必须确认当前计数低于已提交上限。增加预算需另行审批，不在本文范围内。",
+      "assertions": [
+        "确认当前计数低于已提交上限的条件出现在写入动作之前。",
+        "保留 --write 写回当前计数且仅用于降低预算的限制。",
+        "保留计数超限导致 CI 失败的行为。",
+        "没有声称无参数运行脚本会输出计数，也没有补造参数或输出。",
+        "删除抽象评价，说明围绕降低预算的操作组织。"
+      ]
+    },
+    {
+      "id": "release-notes-preserve-evidence",
+      "prompt": "将以下发布说明去掉 AI 味，直接给修改后的发布说明。原文：专家认为这次升级显著提升稳定性。不仅优化了性能，更是为未来奠定坚实基石。变更：本地缓存请求超时从 5 s 改成 8 s。灰度中的单机样本里，24 小时失败率从 2% 降到 1%；尚未验证多机环境，不确定改善来自超时调整还是同期负载降低。新增 --cache-dir 参数；未传时仍使用 ~/.cache/demo。未来可期。",
+      "assertions": [
+        "保留 5 s 到 8 s、24 小时及 2% 到 1% 的数据。",
+        "保留单机灰度样本范围、多机未验证及因果不确定性。",
+        "保留 --cache-dir 和未传参数时的默认路径。",
+        "删除无来源的专家归因和泛泛效果断言，不补造改善原因。"
+      ]
+    },
+    {
+      "id": "pr-description-reports-actual-validation",
+      "prompt": "帮我写一条可直接发布的 PR 描述。原始材料：问题：输入为空时仍调用 fetchSummary，用户看到请求错误。修改：在 submitSummary 的输入校验阶段拒绝空字符串与全空白字符串，显示“请输入内容”，不发送请求。正常非空输入继续原流程。验证：只做过手工测试，覆盖空输入、三个空格及 hello；没有跑自动化测试。最终描述要短，不要流水账。",
+      "assertions": [
+        "说明空字符串和全空白字符串被拒绝，并保留提示文本和不发送请求的行为。",
+        "说明非空输入继续原流程。",
+        "准确描述三个手工验证输入，明确未运行自动化测试。",
+        "直接交付简短 PR 描述，不插入技能流程、发布动作或编造测试结果。"
+      ]
+    },
+    {
+      "id": "tutorial-visible-results",
+      "prompt": "根据以下已确认的工具行为，用中文写一份面向初学者的入门教程，目标是保存并读回一个键值。demo-store init 创建 store.json，并输出 Created store.json。demo-store set hello world 保存键值，并输出 Saved hello。demo-store get hello 输出 world。只编写教程，不执行命令。",
+      "assertions": [
+        "开头说明学习者将完成保存并读回键值这一可见成果。",
+        "按 init、set、get 的顺序给出操作，并说明各步已提供的可见结果。",
+        "不把教程写成完整参数参考，不补造命令或输出。"
+      ]
+    },
+    {
+      "id": "reference-defaults-and-errors",
+      "prompt": "把以下事实整理为供开发者查阅的中文命令参考，不写入门教程。命令为 cache get KEY [--ttl SECONDS]。KEY 必填。--ttl 默认 60，允许整数 1–3600。找到键时向标准输出写入值，并以退出码 0 结束。键不存在时不写入缓存，以退出码 3 结束，并向标准错误输出 Key not found。只编写参考，不执行命令。",
+      "assertions": [
+        "明确必填 KEY、可选 --ttl、默认值 60 和整数范围 1–3600。",
+        "保留命中时的标准输出和退出码 0，以及缺失时的标准错误文本、退出码 3 和不写缓存的行为。",
+        "按命令、参数、结果或错误组织，避免手把手教学和主观推销。"
+      ]
+    },
+    {
+      "id": "explanation-snapshot-tradeoff",
+      "prompt": "请写一段供开发者理解原因的中文解释：为什么比较 skill 版本前要先做快照？已知事实只有：开发目录会继续修改；符号链接会读取目标的即时内容；一次评测可能持续几十秒；完整复制 skill 与依赖可以固定这次运行的输入，但会占用额外磁盘并增加一次复制。说明机制和取舍，不写安装操作步骤，也不推测任何作者的历史动机。",
+      "assertions": [
+        "把开发中修改、链接读取即时内容和运行输入可能改变连接起来解释。",
+        "说明完整复制 skill 及依赖如何固定输入，并保留额外磁盘和复制成本。",
+        "围绕原因与取舍展开，不改写成安装教程或编造历史动机。"
+      ]
+    },
+    {
+      "id": "english-procedure-clarity",
+      "prompt": "Rewrite the following material as a concise English procedure. Do not execute commands. Facts: `verify backup.db` prints OK only when the backup checksum is valid. Copying backup.db to live.db overwrites the live database. Stop the service with `svc stop` before copying. Start it with `svc start` after copying. If checksum verification fails, do not overwrite live.db. Use only the supplied commands and facts.",
+      "assertions": [
+        "The verification condition appears before the database overwrite action, and invalid verification never authorizes overwriting.",
+        "The procedure stops the service before copying and starts it after copying, without inventing new flags or verification outputs.",
+        "Instructions use direct imperative sentences, generally around 20 words or fewer, without packing several independent instructions into one sentence."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "skill": "unslop",
+  "cases": [
+    {
+      "id": "remove-inflation-keep-limits",
+      "prompt": "去掉这段发布说明的 AI 味，直接给改写结果：专家认为，本次更新是划时代的关键里程碑，为高效协作奠定坚实基石。事实是：导出任务默认超时从 30 s 改为 45 s；只在两个测试项目验证过，尚无生产数据。新增 --format csv，默认仍为 json。未来可期。",
+      "assertions": [
+        "删除无具体来源的专家归因、夸大评价和泛泛结尾。",
+        "保留 30 s 到 45 s、两个测试项目、无生产数据的范围限制。",
+        "保留 --format csv 和默认 json，不补造生产效果或性能提升。"
+      ]
+    },
+    {
+      "id": "expand-compressed-instructions",
+      "prompt": "把这段压缩得难读的技术说明改成完整、直白的英文句子，保留事实：Uploader: filename >64 chars → reject, exit 4, no upload. Filename length ≤64 chars → continue validation; success not guaranteed. This is not just a guardrail but a flywheel for robust delivery.",
+      "assertions": [
+        "明确超过 64 个字符时拒绝文件名，以退出码 4 结束，且不上传。",
+        "明确不超过 64 个字符只是继续校验，不保证成功。",
+        "使用完整句子解释箭头和碎片，删除无具体机制的 flywheel 比喻及 Not just X but Y 结构。"
+      ]
+    }
+  ]
+}
