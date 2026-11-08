@@ -1,5 +1,7 @@
 # Skills
 
+中文 | [English](README.en.md)
+
 我的个人 Agent Skills，采用 MIT 许可。
 
 ## Skills
