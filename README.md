@@ -44,7 +44,9 @@ bash scripts/link-skills.sh
 `list-skills.sh` 列出仓库中的 `SKILL.md`。
 `link-skills.sh` 将每个 skill 文件夹链接到 `~/.agents/skills/<name>`。
 例如，`~/.agents/skills/explain` 指向本仓库的 `skills/explain/`。
-修改源码后无需再次复制；新建 skill 后重新运行链接脚本。在独立 agent 会话中测试实际任务。
+修改源码后无需再次复制。在独立 agent 会话中测试实际任务。
+
+新增 skill 时，在 `skills/<name>/` 下创建 `SKILL.md`，并按需要加入 `scripts/`、`references/` 或 `assets/`，然后重新运行链接脚本。
 
 链接脚本沿用 Matt Pocock 的开发用实现：已有的同名真实目录会被删除并替换为链接，已有同名链接也会被替换。首次使用前请确认安装目录中的同名内容已经迁移或备份。仓库需要保留在链接指向的位置。
 
@@ -59,10 +61,6 @@ python3 scripts/eval-skills.py compare --skill writing-docs --baseline HEAD --mo
 这里 `HEAD` 指最近一次提交，默认候选版本为当前 `skills/` 源码，包括尚未提交的修改；也可以把 `--baseline` 换成提交 SHA、tag 或分支。无需在编辑前运行脚本或手动创建快照。
 
 工具会自行取出两组源码及依赖，在独立会话中执行任务并生成 A / B 对照页。任务、版本、输出和评分保存在本次 `.eval-runs/` 运行记录中，默认不提交到 Git。评测使用 Codex CLI 配额，由你显式运行。重复运行、模型评分、人工反馈及失败恢复见 [评测说明](evals/README.md)。
-
-## 添加 skill
-
-在 `skills/<name>/` 下创建 `SKILL.md`，并按需要加入 `scripts/`、`references/` 或 `assets/`。随后运行 `bash scripts/link-skills.sh`。
 
 ## 许可与来源
 
